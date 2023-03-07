@@ -5,7 +5,7 @@
 #AutoIt3Wrapper_Compression=3
 #AutoIt3Wrapper_Res_Comment=kiosk.exe “Путь к файлу.pptx” 2 5 300, 2 – Номер слайда меню (по умолчанию – 2)
 #AutoIt3Wrapper_Res_Description=Программа запуска презентации на инфостенде
-#AutoIt3Wrapper_Res_Fileversion=0.2.0.1
+#AutoIt3Wrapper_Res_Fileversion=0.2.0.2
 #AutoIt3Wrapper_Res_Fileversion_AutoIncrement=y
 #AutoIt3Wrapper_Res_ProductName=Infostand presentation launcher
 #AutoIt3Wrapper_Res_ProductVersion=1
@@ -19,7 +19,13 @@
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 #include <FileOperations.au3>
 #include <FileConstants.au3>
+#include <Misc.au3>
 $oMyError = ObjEvent("AutoIt.Error","MyErrFunc")    ; Initialize a COM error handler
+
+If _Singleton("infostand", 1) = 0 Then
+	MsgBox($MB_SYSTEMMODAL, "Предупреждение", "Программа уже запущена!")
+	Exit
+EndIf
 
 Global $slideTimer
 Global $slideNumber
@@ -52,7 +58,7 @@ $menuSlide = $CmdLine[0] > 1 ? $CmdLine[2] : 2
 $slideDelay = $CmdLine[0] > 2 ? $CmdLine[3] * 1000 : 5000
 $idleTime = $CmdLine[0] > 3 ? $CmdLine[4] * 1000 : 300000
 
-$updateDelay = 10000 ; частота проверки обновления презентации
+$updateDelay = 20000 ; частота проверки обновления презентации
 
 $localFileName = @ScriptDir & '\~presentation.pptx'
 $localFileTimeStamp = FileGetTime($localFileName, 0, 1)
@@ -213,7 +219,6 @@ Func CheckForUpdate()
 			$localFileTimeStamp = $remoteFileTimeStamp
 		EndIf
 	EndIf
-
 
 EndFunc   ;==>CheckForUpdate
 
