@@ -5,7 +5,7 @@
 #AutoIt3Wrapper_Compression=3
 #AutoIt3Wrapper_Res_Comment=kiosk.exe “Путь к файлу.pptx” 2 5 300, 2 – Номер слайда меню (по умолчанию – 2)
 #AutoIt3Wrapper_Res_Description=Программа запуска презентации на инфостенде
-#AutoIt3Wrapper_Res_Fileversion=0.2.0.2
+#AutoIt3Wrapper_Res_Fileversion=0.2.0.11
 #AutoIt3Wrapper_Res_Fileversion_AutoIncrement=y
 #AutoIt3Wrapper_Res_ProductName=Infostand presentation launcher
 #AutoIt3Wrapper_Res_ProductVersion=1
@@ -72,7 +72,9 @@ $slideTimer = TimerInit()
 $idleShow = True
 
 While 1
-	CheckForUpdate()
+	Do
+		$updated = CheckForUpdate()
+	Until $updated
 
 	$moved = False
 
@@ -142,7 +144,6 @@ Func RunSlideShow()
 			If IsObj($Presentation) Then
 				RunSlideShow()
 			EndIf
-			ToolTip("Ожидание презентации")
 			Return False
 		EndIf
 	EndIf
@@ -199,27 +200,25 @@ Func CheckForUpdate()
 		$updateTimer = TimerInit()
 		$remoteFileTimeStamp = FileGetTime($remoteFileName, 0, 1)
 		If $localFileTimeStamp <> $remoteFileTimeStamp Then
-			ToolTip("Презентация в режиме обновления у исполнителя. Ожидайте!")
-			Sleep( 2000 )
-			Local $hFileOpen = FileOpen($remoteFileName, 0)
-			If $hFileOpen = -1 Then
-				ToolTip("Пока не получилось получить обновление, повторяю попытку!")
-				Sleep( 5000 )
-				Return False
+
+			ToolTip("Презентация в режиме обновления." & @CRLF & "Закрываю презентацию, подождите...")
+			$Presentation.Close()
+			$PPT.Quit
+			Sleep( 3000 )
+
+			ToolTip("Обновление файла, подождите...")
+			If FileCopy($remoteFileName, $localFileName, 1) Then
+				$localFileTimeStamp = FileGetTime($localFileName, 0, 1)
+				If $localFileTimeStamp = $remoteFileTimeStamp Then
+					OpenPresentation()
+					$slideNumber = 1
+				Else
+					Return False
+				EndIf
 			EndIf
-			FileClose ( $hFileOpen )
-			ToolTip("Обновление презентации, подождите...")
-			If IsObj($PPT) Then
-				ToolTip("Закрываю презентацию.")
-				$PPT.Quit
-			EndIf
-			FileCopy($remoteFileName, $localFileName, 1)
-			OpenPresentation()
-			RunSlideShow()
-			$localFileTimeStamp = $remoteFileTimeStamp
 		EndIf
 	EndIf
-
+	Return True
 EndFunc   ;==>CheckForUpdate
 
 Func MyErrFunc()
